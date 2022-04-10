@@ -6,53 +6,15 @@ from json import JSONDecodeError
 
 import aio_pika
 import cfg_load
-import requests
 import riprova as riprova
 from pydantic import ValidationError
 
-from typing import Optional, Union
-
-from pydantic import BaseModel
-
+from router import dispatch
+from schemas import IncomingMessageSchema
 
 LOG_FORMAT = '%(asctime)s %(levelname)-6s %(funcName)s (on line %(lineno)-4d) : %(message)s'
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 logger = logging.getLogger(__name__)
-
-
-class IncomingMessageSchema(BaseModel):
-    id: str
-    body: str
-    fromMe: Optional[bool] = False
-    self: Optional[int] = 0
-    isForwarded: Optional[bool] = False
-    author: str
-    time: int
-    chatId: str
-    type: str
-    senderName: str
-    caption: Union[str, None] = None
-    quotedMsgId: Union[str, int, None] = None
-
-
-def get_response(message: IncomingMessageSchema, cfg):
-    if message.body.lower() == 'join bot': 
-        logger.info("new session starting...")
-        body = ''
-    else:
-        body = message.body
-    
-    if 'c.us' in message.chatId:
-        url = f'http://localhost:5000/ussd?MSISDN={message.chatId.replace("@c.us", "")}&session_id=1000010&ussd_string={body}'
-        resp = requests.get(url)
-        logger.info(f"{resp.status_code}  ::  {resp.text}")
-        if resp.status_code == 200:
-            return resp.text
-        else:
-
-            return 'CON error retrieving response'
-    else:
-        return None
 
 
 def _get_message(d: dict):
@@ -132,16 +94,15 @@ class WhatsAPI:
                 logger.info(f"sender: {m['senderName']}")
                 logger.info(f"message: {m['body']}")
 
-                resp = get_response(IncomingMessageSchema(**m), cfg=confg)
+                resp = dispatch(IncomingMessageSchema(**m), cfg=confg)
                 if resp:
-                    
                     logger.debug(f"response: {resp}")
                     await self.publish({
                         'chat_id': m['chatId'],
-                        'message': resp[4:],
+                        'message': resp,
                         'type': 'chat'}
                     )
-                
+
         except JSONDecodeError as e:
             logger.info("ERROR ON INPUT")
             logger.error(f'[JSONDecodeError]: {e}')
