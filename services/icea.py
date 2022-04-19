@@ -16,7 +16,7 @@ def ussd_handler(message: IncomingMessageSchema, session_id, cfg=None):
         body = message.body
 
     if 'c.us' in message.chatId:
-        url = f'http://localhost:5002/ussd?MSISDN={message.chatId.replace("@c.us", "")}&session_id={session_id}&ussd_string={body}'
+        url = f'http://localhost:5000/ussd?MSISDN={message.chatId.replace("@c.us", "")}&session_id={session_id}&ussd_string={body}'
         resp = requests.get(url)
         logger.info(f"{resp.status_code}  ::  {resp.text}")
         if resp.status_code == 200:

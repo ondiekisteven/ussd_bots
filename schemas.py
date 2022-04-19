@@ -1,5 +1,4 @@
 from typing import Optional, Union
-
 from pydantic import BaseModel
 
 
@@ -15,4 +14,3 @@ class IncomingMessageSchema(BaseModel):
     type: str
     senderName: str
     caption: Union[str, None] = None
-    quotedMsgId: Union[str, int, None] = None

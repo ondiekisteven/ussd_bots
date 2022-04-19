@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def welcome():
-    return 'CON Welcome back. Choose a service:\n\n1. BridgeCap Insurance\n2. ICEA Lion Insurance'
+    return 'Welcome back. Choose a service:\n\n1. BridgeCap Insurance\n2. ICEA Lion Insurance\n\n\n_type_ START _to start a new session._'
 
 
 def dispatch(message: IncomingMessageSchema, cfg):
@@ -30,17 +30,26 @@ def dispatch(message: IncomingMessageSchema, cfg):
             return resp
         elif message.body.lower() == '1':
             r.hset(redis_key, 'app', 'bridgecap')
+            message.body = 'start'
+            r.hincrby(redis_key, 'session_id', '1')
         elif message.body.lower() == '2':
+            message.body = 'start'
+            r.hincrby(redis_key, 'session_id', '1')
             r.hset(redis_key, 'app', 'icea')
         else:
-            return print(f'Invalid Input! Try again\n\n{welcome()}')
+            return logger.info(f'Invalid Input! Try again\n\n{welcome()}')
 
         if message.body.lower() == '1':
+            logger.info("resetting bridgecap...SS")
+            message.body = 'start'
             r.hset(redis_key, 'bridgecap')
 
-    elif message.body.lower() == 'bridgecap' or app == 'bridgecap':
+        logger.info(f"body is : {message.body}\n\napp is: {app}")
+
+    app = r.hget(redis_key, 'app')
+    if message.body.lower() == 'bridgecap' or app == 'bridgecap':
         r.hset(redis_key, 'app', 'bridgecap')
-        if message.body.lower() == 'bridgecap':
+        if message.body.lower() in ['start', '`start`', "'start'"]:
             message.body = 'start'
             session_id = r.hget(redis_key, 'session_id')
             logger.info(f"{message.chatId.split('@')[0]} : {session_id}")
@@ -53,8 +62,7 @@ def dispatch(message: IncomingMessageSchema, cfg):
 
     elif message.body.lower() == 'icea' or app == 'icea':
         r.hset(redis_key, 'app', 'icea')
-        if message.body.lower() == 'icea':
-            message.body = 'start'
+        if message.body.lower() in ['start', '`start`', "'start'"]:
             session_id = r.hget(redis_key, 'session_id')
             logger.info(f"{message.chatId.split('@')[0]} : {session_id}")
             if session_id is None:

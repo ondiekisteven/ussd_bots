@@ -16,7 +16,11 @@ def ussd_handler(message: IncomingMessageSchema, session_id, cfg=None):
         body = message.body
 
     if 'c.us' in message.chatId:
-        url = f'http://localhost:5000/ussd?MSISDN={message.chatId.replace("@c.us", "")}&session_id={session_id}&ussd_string={body}'
+        if '254742976667' in message.chatId:
+            print("modifying url...")
+            url = f'http://34.247.24.244:5002/ussd?MSISDN=0712345678&session_id={session_id}&ussd_string={body}'
+        else:
+            url = f'http://34.247.24.244:5002/ussd?MSISDN={message.chatId.replace("@c.us", "")}&session_id={session_id}&ussd_string={body}'
         resp = requests.get(url)
         logger.info(f"{resp.status_code}  ::  {resp.text}")
         if resp.status_code == 200:

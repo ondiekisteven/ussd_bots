@@ -70,11 +70,11 @@ class WhatsAPI:
                 await self.exchange.publish(message, routing_key=confg['rabbitmq']['outgoing_routing_key'])
             else:
                 logger.error('Rabbitmq exchange is empty or None')
-                raise
+                
         except Exception as e:
             logger.info('ERROR PUBLISHING MESSAGE...')
             logger.exception(str(e))
-            raise
+            
 
     async def _process(self, message: aio_pika.IncomingMessage):
 
@@ -102,6 +102,9 @@ class WhatsAPI:
                         'message': resp,
                         'type': 'chat'}
                     )
+            else:
+                logger.info(f"NO CHAT FOUND. THAT'S PROBABLY A STATUS UPDATE FROM"
+                            f" {json_body['sender']['name'] or json_body['chat']['contact']['formattedName']}")
 
         except JSONDecodeError as e:
             logger.info("ERROR ON INPUT")
